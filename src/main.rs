@@ -97,4 +97,3 @@ fn ui(f: &mut Frame, app: &mut App) {
     let area = ratatui::layout::Rect::new(app.x, app.y, 2, 2);
     f.render_widget(square, area);
 }
-
