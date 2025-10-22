@@ -2,6 +2,11 @@
 name = "kli"
 version = "0.1.0"
 edition = "2021"
+description = "A TUI pseudo-game where 1 or 2 kids can control two cursors through the screen and discover some colors."
+license = "MIT"
+repository = "https://github.com/andunieee/kli"
+keywords = ["tui", "game", "colors", "kids"]
+categories = ["games", "command-line-utilities"]
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
