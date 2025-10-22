@@ -296,15 +296,15 @@ fn ui(f: &mut Frame, app: &mut App) {
 
     let mut square = Block::default().borders(Borders::ALL);
     if let Some(fst_color) = app.fst_color {
-        square = square.style(Style::default().fg(fst_color));
+        square = square.style(Style::default().bg(fst_color));
     }
 
     let fst_area = ratatui::layout::Rect::new(app.fst_x, app.fst_y, 2, 2);
     f.render_widget(square, fst_area);
 
     let mut snd_square = Block::default().borders(Borders::ALL);
-    if let Some(fst_color) = app.snd_color {
-        snd_square = snd_square.style(Style::default().fg(fst_color));
+    if let Some(snd_color) = app.snd_color {
+        snd_square = snd_square.style(Style::default().bg(snd_color));
     }
     let snd_area = ratatui::layout::Rect::new(app.snd_x, app.snd_y, 2, 2);
     f.render_widget(snd_square, snd_area);
