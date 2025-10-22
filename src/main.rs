@@ -38,6 +38,9 @@ struct App {
     snd_y: u16,
     snd_direction: Direction,
     snd_color: Option<Color>,
+
+    flash: bool,
+    flash_timer: u32,
 }
 
 impl App {
@@ -52,6 +55,9 @@ impl App {
             snd_y: 0,
             snd_direction: Direction::None,
             snd_color: None,
+
+            flash: false,
+            flash_timer: 0,
         }
     }
 
@@ -99,6 +105,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     loop {
         let size = terminal.size()?;
         terminal.draw(|f| ui(f, app))?;
+
+        if app.flash_timer > 0 {
+            app.flash_timer -= 1;
+            if app.flash_timer == 0 {
+                app.flash = false;
+            }
+        }
 
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
@@ -267,6 +280,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 }
                 app.fst_direction = Direction::None;
                 app.snd_direction = Direction::None;
+                // flash screen
+                app.flash = true;
+                app.flash_timer = 5;
             } else {
                 // no collision, move
                 app.fst_x = new_fst_x;
@@ -291,7 +307,10 @@ fn new_color_by_border(dir: Direction) -> Option<Color> {
 fn ui(f: &mut Frame, app: &mut App) {
     let size = f.size();
 
-    let block = Block::default();
+    let mut block = Block::default();
+    if app.flash {
+        block = block.style(Style::default().bg(Color::White));
+    }
     f.render_widget(block, size);
 
     let mut square = Block::default().borders(Borders::ALL);
