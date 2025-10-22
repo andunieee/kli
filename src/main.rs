@@ -135,56 +135,80 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.fst_direction == Direction::Right {
                             app.fst_direction = Direction::None;
                         } else {
-                            app.fst_direction = Direction::Left;
+                            let can_move = app.fst_x > 0 && !(app.fst_x.saturating_sub(app.snd_x) <= 2 && app.fst_y == app.snd_y);
+                            if can_move {
+                                app.fst_direction = Direction::Left;
+                            }
                         }
                     }
                     KeyCode::Right => {
                         if app.fst_direction == Direction::Left {
                             app.fst_direction = Direction::None;
                         } else {
-                            app.fst_direction = Direction::Right;
+                            let can_move = app.fst_x + 2 < size.width && !(app.snd_x.saturating_sub(app.fst_x) <= 2 && app.fst_y == app.snd_y);
+                            if can_move {
+                                app.fst_direction = Direction::Right;
+                            }
                         }
                     }
                     KeyCode::Up => {
                         if app.fst_direction == Direction::Down {
                             app.fst_direction = Direction::None;
                         } else {
-                            app.fst_direction = Direction::Up;
+                            let can_move = app.fst_y > 0 && !(app.fst_y.saturating_sub(app.snd_y) <= 2 && app.fst_x == app.snd_x);
+                            if can_move {
+                                app.fst_direction = Direction::Up;
+                            }
                         }
                     }
                     KeyCode::Down => {
                         if app.fst_direction == Direction::Up {
                             app.fst_direction = Direction::None;
                         } else {
-                            app.fst_direction = Direction::Down;
+                            let can_move = app.fst_y + 2 < size.height && !(app.snd_y.saturating_sub(app.fst_y) <= 2 && app.fst_x == app.snd_x);
+                            if can_move {
+                                app.fst_direction = Direction::Down;
+                            }
                         }
                     }
                     KeyCode::Char('a') | KeyCode::Char('4') => {
                         if app.snd_direction == Direction::Right {
                             app.snd_direction = Direction::None;
                         } else {
-                            app.snd_direction = Direction::Left;
+                            let can_move = app.snd_x > 0 && !(app.snd_x.saturating_sub(app.fst_x) <= 2 && app.snd_y == app.fst_y);
+                            if can_move {
+                                app.snd_direction = Direction::Left;
+                            }
                         }
                     }
                     KeyCode::Char('d') | KeyCode::Char('6') => {
                         if app.snd_direction == Direction::Left {
                             app.snd_direction = Direction::None;
                         } else {
-                            app.snd_direction = Direction::Right;
+                            let can_move = app.snd_x + 2 < size.width && !(app.fst_x.saturating_sub(app.snd_x) <= 2 && app.snd_y == app.fst_y);
+                            if can_move {
+                                app.snd_direction = Direction::Right;
+                            }
                         }
                     }
                     KeyCode::Char('w') | KeyCode::Char('8') => {
                         if app.snd_direction == Direction::Down {
                             app.snd_direction = Direction::None;
                         } else {
-                            app.snd_direction = Direction::Up;
+                            let can_move = app.snd_y > 0 && !(app.snd_y.saturating_sub(app.fst_y) <= 2 && app.snd_x == app.fst_x);
+                            if can_move {
+                                app.snd_direction = Direction::Up;
+                            }
                         }
                     }
                     KeyCode::Char('s') | KeyCode::Char('2') => {
                         if app.snd_direction == Direction::Up {
                             app.snd_direction = Direction::None;
                         } else {
-                            app.snd_direction = Direction::Down;
+                            let can_move = app.snd_y + 2 < size.height && !(app.fst_y.saturating_sub(app.snd_y) <= 2 && app.snd_x == app.fst_x);
+                            if can_move {
+                                app.snd_direction = Direction::Down;
+                            }
                         }
                     }
                     _ => {}
