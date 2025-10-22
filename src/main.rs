@@ -30,9 +30,16 @@ impl App {
         Self {
             x: 0,
             y: 0,
-            second_x: if has_second { 5 } else { 0 },
-            second_y: if has_second { 5 } else { 0 },
+            second_x: 0,
+            second_y: 0,
             has_second,
+        }
+    }
+
+    fn set_initial_positions(&mut self, width: u16, height: u16) {
+        if self.has_second {
+            self.second_x = width.saturating_sub(2);
+            self.second_y = height.saturating_sub(2);
         }
     }
 
@@ -94,8 +101,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+    let initial_size = terminal.size()?;
 
     let mut app = App::new(has_second);
+    app.set_initial_positions(initial_size.width, initial_size.height);
     let res = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;
