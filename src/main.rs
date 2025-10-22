@@ -6,10 +6,12 @@ use crossterm::{
 };
 use ratatui::{
     backend::{Backend, CrosstermBackend},
+    style::{Color, Style},
     widgets::{Block, Borders},
     Frame, Terminal,
 };
-use std::{error::Error, io, time::Duration};
+use simplelog::{Config, LevelFilter, WriteLogger};
+use std::{error::Error, fs::File, io, time::Duration};
 
 #[derive(Parser)]
 struct Args {
@@ -27,87 +29,44 @@ enum Direction {
 }
 
 struct App {
-    x: u16,
-    y: u16,
-    second_x: u16,
-    second_y: u16,
-    has_second: bool,
-    direction: Direction,
-    second_direction: Direction,
+    fst_x: u16,
+    fst_y: u16,
+    fst_direction: Direction,
+    fst_color: Option<Color>,
+
+    snd_x: u16,
+    snd_y: u16,
+    snd_direction: Direction,
+    snd_color: Option<Color>,
 }
 
 impl App {
-    fn new(has_second: bool) -> Self {
+    fn new() -> Self {
         Self {
-            x: 0,
-            y: 0,
-            second_x: 0,
-            second_y: 0,
-            has_second,
-            direction: Direction::None,
-            second_direction: Direction::None,
+            fst_x: 0,
+            fst_y: 0,
+            fst_direction: Direction::None,
+            fst_color: None,
+
+            snd_x: 0,
+            snd_y: 0,
+            snd_direction: Direction::None,
+            snd_color: None,
         }
     }
 
     fn set_initial_positions(&mut self, width: u16, height: u16) {
-        if self.has_second {
-            self.second_x = width.saturating_sub(2);
-            self.second_y = height.saturating_sub(2);
-        }
-    }
-
-    fn move_left(&mut self) {
-        if self.x > 0 {
-            self.x -= 1;
-        }
-    }
-
-    fn move_right(&mut self, max_x: u16) {
-        if self.x + 2 < max_x {
-            self.x += 1;
-        }
-    }
-
-    fn move_up(&mut self) {
-        if self.y > 0 {
-            self.y -= 1;
-        }
-    }
-
-    fn move_down(&mut self, max_y: u16) {
-        if self.y + 2 < max_y {
-            self.y += 1;
-        }
-    }
-
-    fn move_second_left(&mut self) {
-        if self.has_second && self.second_x > 0 {
-            self.second_x -= 1;
-        }
-    }
-
-    fn move_second_right(&mut self, max_x: u16) {
-        if self.has_second && self.second_x + 2 < max_x {
-            self.second_x += 1;
-        }
-    }
-
-    fn move_second_up(&mut self) {
-        if self.has_second && self.second_y > 0 {
-            self.second_y -= 1;
-        }
-    }
-
-    fn move_second_down(&mut self, max_y: u16) {
-        if self.has_second && self.second_y + 2 < max_y {
-            self.second_y += 1;
-        }
+        self.snd_x = width.saturating_sub(2);
+        self.snd_y = height.saturating_sub(2);
     }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let args = Args::parse();
-    let has_second = args.boxes.as_deref() == Some("2");
+    let _ = WriteLogger::init(
+        LevelFilter::Info,
+        Config::default(),
+        File::create("kli.log").unwrap(),
+    );
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -116,8 +75,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
     let initial_size = terminal.size()?;
 
-    let mut app = App::new(has_second);
+    let mut app = App::new();
     app.set_initial_positions(initial_size.width, initial_size.height);
+
     let res = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;
@@ -145,98 +105,207 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                     KeyCode::Left => {
-                        if app.direction == Direction::Right {
-                            app.direction = Direction::None;
+                        if app.fst_direction == Direction::Right {
+                            app.fst_direction = Direction::None;
                         } else {
-                            app.direction = Direction::Left;
+                            app.fst_direction = Direction::Left;
                         }
                     }
                     KeyCode::Right => {
-                        if app.direction == Direction::Left {
-                            app.direction = Direction::None;
+                        if app.fst_direction == Direction::Left {
+                            app.fst_direction = Direction::None;
                         } else {
-                            app.direction = Direction::Right;
+                            app.fst_direction = Direction::Right;
                         }
                     }
                     KeyCode::Up => {
-                        if app.direction == Direction::Down {
-                            app.direction = Direction::None;
+                        if app.fst_direction == Direction::Down {
+                            app.fst_direction = Direction::None;
                         } else {
-                            app.direction = Direction::Up;
+                            app.fst_direction = Direction::Up;
                         }
                     }
                     KeyCode::Down => {
-                        if app.direction == Direction::Up {
-                            app.direction = Direction::None;
+                        if app.fst_direction == Direction::Up {
+                            app.fst_direction = Direction::None;
                         } else {
-                            app.direction = Direction::Down;
+                            app.fst_direction = Direction::Down;
                         }
                     }
                     KeyCode::Char('a') | KeyCode::Char('4') => {
-                        if app.second_direction == Direction::Right {
-                            app.second_direction = Direction::None;
+                        if app.snd_direction == Direction::Right {
+                            app.snd_direction = Direction::None;
                         } else {
-                            app.second_direction = Direction::Left;
+                            app.snd_direction = Direction::Left;
                         }
                     }
                     KeyCode::Char('d') | KeyCode::Char('6') => {
-                        if app.second_direction == Direction::Left {
-                            app.second_direction = Direction::None;
+                        if app.snd_direction == Direction::Left {
+                            app.snd_direction = Direction::None;
                         } else {
-                            app.second_direction = Direction::Right;
+                            app.snd_direction = Direction::Right;
                         }
                     }
                     KeyCode::Char('w') | KeyCode::Char('8') => {
-                        if app.second_direction == Direction::Down {
-                            app.second_direction = Direction::None;
+                        if app.snd_direction == Direction::Down {
+                            app.snd_direction = Direction::None;
                         } else {
-                            app.second_direction = Direction::Up;
+                            app.snd_direction = Direction::Up;
                         }
                     }
                     KeyCode::Char('s') | KeyCode::Char('2') => {
-                        if app.second_direction == Direction::Up {
-                            app.second_direction = Direction::None;
+                        if app.snd_direction == Direction::Up {
+                            app.snd_direction = Direction::None;
                         } else {
-                            app.second_direction = Direction::Down;
+                            app.snd_direction = Direction::Down;
                         }
                     }
                     _ => {}
                 }
             }
         } else {
-            // No event, continue moving in current direction
-            match app.direction {
-                Direction::Left => app.move_left(),
-                Direction::Right => app.move_right(size.width),
-                Direction::Up => app.move_up(),
-                Direction::Down => app.move_down(size.height),
+            // no event, continue moving in current fst_direction
+            let mut new_fst_x = app.fst_x;
+            let mut new_fst_y = app.fst_y;
+            match app.fst_direction {
+                Direction::Left => {
+                    if new_fst_x > 0 {
+                        new_fst_x -= 1;
+                        if new_fst_x == 0 {
+                            app.fst_color = new_color_by_border(app.fst_direction);
+                            app.fst_direction = Direction::None;
+                        }
+                    }
+                }
+                Direction::Right => {
+                    if new_fst_x + 2 < size.width {
+                        new_fst_x += 1;
+                        if new_fst_x == size.width - 2 {
+                            app.fst_color = new_color_by_border(app.fst_direction);
+                            app.fst_direction = Direction::None;
+                        }
+                    }
+                }
+                Direction::Up => {
+                    if new_fst_y > 0 {
+                        new_fst_y -= 1;
+                        if new_fst_y == 0 {
+                            app.fst_color = new_color_by_border(app.fst_direction);
+                            app.fst_direction = Direction::None;
+                        }
+                    }
+                }
+                Direction::Down => {
+                    if new_fst_y + 2 < size.height {
+                        new_fst_y += 1;
+                        if new_fst_y == size.height - 2 {
+                            app.fst_color = new_color_by_border(app.fst_direction);
+                            app.fst_direction = Direction::None;
+                        }
+                    }
+                }
                 Direction::None => {}
             }
-            if app.has_second {
-                match app.second_direction {
-                    Direction::Left => app.move_second_left(),
-                    Direction::Right => app.move_second_right(size.width),
-                    Direction::Up => app.move_second_up(),
-                    Direction::Down => app.move_second_down(size.height),
-                    Direction::None => {}
+
+            let mut new_snd_x = app.snd_x;
+            let mut new_snd_y = app.snd_y;
+            match app.snd_direction {
+                Direction::Left => {
+                    if new_snd_x > 0 {
+                        new_snd_x -= 1;
+                        if new_snd_x == 0 {
+                            app.snd_color = new_color_by_border(app.snd_direction);
+                            app.snd_direction = Direction::None;
+                        }
+                    }
                 }
+                Direction::Right => {
+                    if new_snd_x + 2 < size.width {
+                        new_snd_x += 1;
+                        if new_snd_x == size.width - 2 {
+                            app.snd_color = new_color_by_border(app.snd_direction);
+                            app.snd_direction = Direction::None;
+                        }
+                    }
+                }
+                Direction::Up => {
+                    if new_snd_y > 0 {
+                        new_snd_y -= 1;
+                        if new_snd_y == 0 {
+                            app.snd_color = new_color_by_border(app.snd_direction);
+                            app.snd_direction = Direction::None;
+                        }
+                    }
+                }
+                Direction::Down => {
+                    if new_snd_y + 2 < size.height {
+                        new_snd_y += 1;
+                        if new_snd_y == size.height - 2 {
+                            app.snd_color = new_color_by_border(app.snd_direction);
+                            app.snd_direction = Direction::None;
+                        }
+                    }
+                }
+                Direction::None => {}
+            }
+
+            // check for collision
+            let collision = new_fst_x < new_snd_x + 2
+                && new_fst_x + 2 > new_snd_x
+                && new_fst_y < new_snd_y + 2
+                && new_fst_y + 2 > new_snd_y;
+
+            if collision {
+                // swap fst_colors
+                let temp = app.fst_color;
+                app.fst_color = app.snd_color;
+                app.snd_color = temp;
+                // if both have same fst_color now, uncolor
+                if app.fst_color == app.snd_color && app.fst_color.is_some() {
+                    app.fst_color = None;
+                    app.snd_color = None;
+                }
+                app.fst_direction = Direction::None;
+                app.snd_direction = Direction::None;
+            } else {
+                // no collision, move
+                app.fst_x = new_fst_x;
+                app.fst_y = new_fst_y;
+                app.snd_x = new_snd_x;
+                app.snd_y = new_snd_y;
             }
         }
     }
 }
 
+fn new_color_by_border(dir: Direction) -> Option<Color> {
+    match dir {
+        Direction::Left => Some(Color::Red),
+        Direction::Right => Some(Color::Blue),
+        Direction::Up => Some(Color::Green),
+        Direction::Down => Some(Color::Yellow),
+        _ => None,
+    }
+}
+
 fn ui(f: &mut Frame, app: &mut App) {
     let size = f.size();
+
     let block = Block::default();
     f.render_widget(block, size);
 
-    let square = Block::default().borders(Borders::ALL);
-    let area = ratatui::layout::Rect::new(app.x, app.y, 2, 2);
-    f.render_widget(square, area);
-
-    if app.has_second {
-        let second_square = Block::default().borders(Borders::ALL);
-        let second_area = ratatui::layout::Rect::new(app.second_x, app.second_y, 2, 2);
-        f.render_widget(second_square, second_area);
+    let mut square = Block::default().borders(Borders::ALL);
+    if let Some(fst_color) = app.fst_color {
+        square = square.style(Style::default().fg(fst_color));
     }
+
+    let fst_area = ratatui::layout::Rect::new(app.fst_x, app.fst_y, 2, 2);
+    f.render_widget(square, fst_area);
+
+    let mut snd_square = Block::default().borders(Borders::ALL);
+    if let Some(fst_color) = app.snd_color {
+        snd_square = snd_square.style(Style::default().fg(fst_color));
+    }
+    let snd_area = ratatui::layout::Rect::new(app.snd_x, app.snd_y, 2, 2);
+    f.render_widget(snd_square, snd_area);
 }
