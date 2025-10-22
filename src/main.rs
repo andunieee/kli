@@ -9,12 +9,21 @@ use ratatui::{
     widgets::{Block, Borders},
     Frame, Terminal,
 };
-use std::{error::Error, io};
+use std::{error::Error, io, time::Duration};
 
 #[derive(Parser)]
 struct Args {
     /// Number of boxes (default 1, use 2 for two boxes)
     boxes: Option<String>,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum Direction {
+    None,
+    Left,
+    Right,
+    Up,
+    Down,
 }
 
 struct App {
@@ -23,6 +32,8 @@ struct App {
     second_x: u16,
     second_y: u16,
     has_second: bool,
+    direction: Direction,
+    second_direction: Direction,
 }
 
 impl App {
@@ -33,6 +44,8 @@ impl App {
             second_x: 0,
             second_y: 0,
             has_second,
+            direction: Direction::None,
+            second_direction: Direction::None,
         }
     }
 
@@ -127,22 +140,86 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         let size = terminal.size()?;
         terminal.draw(|f| ui(f, app))?;
 
-        if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                KeyCode::Left => app.move_left(),
-                KeyCode::Right => app.move_right(size.width),
-                KeyCode::Up => app.move_up(),
-                KeyCode::Down => app.move_down(size.height),
-                KeyCode::Char('a') => app.move_second_left(),
-                KeyCode::Char('d') => app.move_second_right(size.width),
-                KeyCode::Char('w') => app.move_second_up(),
-                KeyCode::Char('s') => app.move_second_down(size.height),
-                KeyCode::Char('4') => app.move_second_left(),
-                KeyCode::Char('6') => app.move_second_right(size.width),
-                KeyCode::Char('8') => app.move_second_up(),
-                KeyCode::Char('2') => app.move_second_down(size.height),
-                _ => {}
+        if event::poll(Duration::from_millis(50))? {
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                    KeyCode::Left => {
+                        if app.direction == Direction::Right {
+                            app.direction = Direction::None;
+                        } else {
+                            app.direction = Direction::Left;
+                        }
+                    }
+                    KeyCode::Right => {
+                        if app.direction == Direction::Left {
+                            app.direction = Direction::None;
+                        } else {
+                            app.direction = Direction::Right;
+                        }
+                    }
+                    KeyCode::Up => {
+                        if app.direction == Direction::Down {
+                            app.direction = Direction::None;
+                        } else {
+                            app.direction = Direction::Up;
+                        }
+                    }
+                    KeyCode::Down => {
+                        if app.direction == Direction::Up {
+                            app.direction = Direction::None;
+                        } else {
+                            app.direction = Direction::Down;
+                        }
+                    }
+                    KeyCode::Char('a') | KeyCode::Char('4') => {
+                        if app.second_direction == Direction::Right {
+                            app.second_direction = Direction::None;
+                        } else {
+                            app.second_direction = Direction::Left;
+                        }
+                    }
+                    KeyCode::Char('d') | KeyCode::Char('6') => {
+                        if app.second_direction == Direction::Left {
+                            app.second_direction = Direction::None;
+                        } else {
+                            app.second_direction = Direction::Right;
+                        }
+                    }
+                    KeyCode::Char('w') | KeyCode::Char('8') => {
+                        if app.second_direction == Direction::Down {
+                            app.second_direction = Direction::None;
+                        } else {
+                            app.second_direction = Direction::Up;
+                        }
+                    }
+                    KeyCode::Char('s') | KeyCode::Char('2') => {
+                        if app.second_direction == Direction::Up {
+                            app.second_direction = Direction::None;
+                        } else {
+                            app.second_direction = Direction::Down;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        } else {
+            // No event, continue moving in current direction
+            match app.direction {
+                Direction::Left => app.move_left(),
+                Direction::Right => app.move_right(size.width),
+                Direction::Up => app.move_up(),
+                Direction::Down => app.move_down(size.height),
+                Direction::None => {}
+            }
+            if app.has_second {
+                match app.second_direction {
+                    Direction::Left => app.move_second_left(),
+                    Direction::Right => app.move_second_right(size.width),
+                    Direction::Up => app.move_second_up(),
+                    Direction::Down => app.move_second_down(size.height),
+                    Direction::None => {}
+                }
             }
         }
     }
