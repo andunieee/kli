@@ -4,6 +4,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use rand::Rng;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     style::{Color, Style},
@@ -11,13 +12,22 @@ use ratatui::{
     Frame, Terminal,
 };
 use simplelog::{Config, LevelFilter, WriteLogger};
-use std::{error::Error, fs::File, io, time::Duration};
+use std::{collections::HashSet, error::Error, fs::File, io, time::Duration};
 
 #[derive(Parser)]
 struct Args {
     /// Number of boxes (default 1, use 2 for two boxes)
     boxes: Option<String>,
 }
+
+#[derive(Clone, Copy)]
+struct SpecialObject {
+    x: u16,
+    y: u16,
+    color: Color,
+}
+
+const SPECIAL_COLORS: [Color; 3] = [Color::Rgb(128, 0, 128), Color::Cyan, Color::Rgb(255, 165, 0)];
 
 #[derive(Clone, Copy, PartialEq)]
 enum Direction {
@@ -41,6 +51,8 @@ struct App {
 
     flash: bool,
     flash_timer: u32,
+
+    specials: Vec<SpecialObject>,
 }
 
 impl App {
@@ -58,6 +70,8 @@ impl App {
 
             flash: false,
             flash_timer: 0,
+
+            specials: vec![],
         }
     }
 
@@ -262,6 +276,24 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 Direction::None => {}
             }
 
+            // check specials
+            let mut to_remove = HashSet::new();
+            for (i, special) in app.specials.iter().enumerate() {
+                if new_fst_x <= special.x && special.x < new_fst_x + 2 && new_fst_y <= special.y && special.y < new_fst_y + 2 {
+                    app.fst_color = Some(special.color);
+                    to_remove.insert(i);
+                }
+                if new_snd_x <= special.x && special.x < new_snd_x + 2 && new_snd_y <= special.y && special.y < new_snd_y + 2 {
+                    app.snd_color = Some(special.color);
+                    to_remove.insert(i);
+                }
+            }
+            let mut to_remove: Vec<usize> = to_remove.into_iter().collect();
+            to_remove.sort_unstable_by(|a, b| b.cmp(a));
+            for i in to_remove {
+                app.specials.remove(i);
+            }
+
             // check for collision
             let collision = new_fst_x < new_snd_x + 2
                 && new_fst_x + 2 > new_snd_x
@@ -269,6 +301,16 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 && new_fst_y + 2 > new_snd_y;
 
             if collision {
+                // drop special if same color
+                if app.fst_color == app.snd_color {
+                    let current = app.fst_color.unwrap_or(Color::Black);
+                    let index = SPECIAL_COLORS.iter().position(|&c| c == current).unwrap_or(0);
+                    let next_color = SPECIAL_COLORS.get(index + 1).copied().unwrap_or(SPECIAL_COLORS[0]);
+                    let mut rng = rand::thread_rng();
+                    let x = rng.gen_range(0..size.width.saturating_sub(2));
+                    let y = rng.gen_range(0..size.height.saturating_sub(2));
+                    app.specials.push(SpecialObject { x, y, color: next_color });
+                }
                 // swap fst_colors
                 let temp = app.fst_color;
                 app.fst_color = app.snd_color;
@@ -327,4 +369,10 @@ fn ui(f: &mut Frame, app: &mut App) {
     }
     let snd_area = ratatui::layout::Rect::new(app.snd_x, app.snd_y, 2, 2);
     f.render_widget(snd_square, snd_area);
+
+    for special in &app.specials {
+        let special_block = Block::default().borders(Borders::ALL).style(Style::default().bg(special.color));
+        let area = ratatui::layout::Rect::new(special.x, special.y, 2, 2);
+        f.render_widget(special_block, area);
+    }
 }
