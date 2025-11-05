@@ -27,7 +27,11 @@ struct SpecialObject {
     color: Color,
 }
 
-const SPECIAL_COLORS: [Color; 3] = [Color::Rgb(128, 0, 128), Color::Cyan, Color::Rgb(255, 165, 0)];
+const SPECIAL_COLORS: [Color; 3] = [
+    Color::Rgb(128, 0, 128),
+    Color::Cyan,
+    Color::Rgb(255, 165, 0),
+];
 
 #[derive(Clone, Copy, PartialEq)]
 enum Direction {
@@ -130,12 +134,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                    KeyCode::Esc => return Ok(()),
                     KeyCode::Left => {
                         if app.fst_direction == Direction::Right {
                             app.fst_direction = Direction::None;
                         } else {
-                            let can_move = app.fst_x > 0 && !(app.fst_x.saturating_sub(app.snd_x) <= 2 && app.fst_y == app.snd_y);
+                            let can_move = app.fst_x > 0
+                                && !(app.fst_x.saturating_sub(app.snd_x) <= 2
+                                    && app.fst_y == app.snd_y);
                             if can_move {
                                 app.fst_direction = Direction::Left;
                             }
@@ -145,7 +151,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.fst_direction == Direction::Left {
                             app.fst_direction = Direction::None;
                         } else {
-                            let can_move = app.fst_x + 2 < size.width && !(app.snd_x.saturating_sub(app.fst_x) <= 2 && app.fst_y == app.snd_y);
+                            let can_move = app.fst_x + 2 < size.width
+                                && !(app.snd_x.saturating_sub(app.fst_x) <= 2
+                                    && app.fst_y == app.snd_y);
                             if can_move {
                                 app.fst_direction = Direction::Right;
                             }
@@ -155,7 +163,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.fst_direction == Direction::Down {
                             app.fst_direction = Direction::None;
                         } else {
-                            let can_move = app.fst_y > 0 && !(app.fst_y.saturating_sub(app.snd_y) <= 2 && app.fst_x == app.snd_x);
+                            let can_move = app.fst_y > 0
+                                && !(app.fst_y.saturating_sub(app.snd_y) <= 2
+                                    && app.fst_x == app.snd_x);
                             if can_move {
                                 app.fst_direction = Direction::Up;
                             }
@@ -165,7 +175,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.fst_direction == Direction::Up {
                             app.fst_direction = Direction::None;
                         } else {
-                            let can_move = app.fst_y + 2 < size.height && !(app.snd_y.saturating_sub(app.fst_y) <= 2 && app.fst_x == app.snd_x);
+                            let can_move = app.fst_y + 2 < size.height
+                                && !(app.snd_y.saturating_sub(app.fst_y) <= 2
+                                    && app.fst_x == app.snd_x);
                             if can_move {
                                 app.fst_direction = Direction::Down;
                             }
@@ -175,7 +187,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.snd_direction == Direction::Right {
                             app.snd_direction = Direction::None;
                         } else {
-                            let can_move = app.snd_x > 0 && !(app.snd_x.saturating_sub(app.fst_x) <= 2 && app.snd_y == app.fst_y);
+                            let can_move = app.snd_x > 0
+                                && !(app.snd_x.saturating_sub(app.fst_x) <= 2
+                                    && app.snd_y == app.fst_y);
                             if can_move {
                                 app.snd_direction = Direction::Left;
                             }
@@ -185,7 +199,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.snd_direction == Direction::Left {
                             app.snd_direction = Direction::None;
                         } else {
-                            let can_move = app.snd_x + 2 < size.width && !(app.fst_x.saturating_sub(app.snd_x) <= 2 && app.snd_y == app.fst_y);
+                            let can_move = app.snd_x + 2 < size.width
+                                && !(app.fst_x.saturating_sub(app.snd_x) <= 2
+                                    && app.snd_y == app.fst_y);
                             if can_move {
                                 app.snd_direction = Direction::Right;
                             }
@@ -195,7 +211,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.snd_direction == Direction::Down {
                             app.snd_direction = Direction::None;
                         } else {
-                            let can_move = app.snd_y > 0 && !(app.snd_y.saturating_sub(app.fst_y) <= 2 && app.snd_x == app.fst_x);
+                            let can_move = app.snd_y > 0
+                                && !(app.snd_y.saturating_sub(app.fst_y) <= 2
+                                    && app.snd_x == app.fst_x);
                             if can_move {
                                 app.snd_direction = Direction::Up;
                             }
@@ -205,7 +223,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if app.snd_direction == Direction::Up {
                             app.snd_direction = Direction::None;
                         } else {
-                            let can_move = app.snd_y + 2 < size.height && !(app.fst_y.saturating_sub(app.snd_y) <= 2 && app.snd_x == app.fst_x);
+                            let can_move = app.snd_y + 2 < size.height
+                                && !(app.fst_y.saturating_sub(app.snd_y) <= 2
+                                    && app.snd_x == app.fst_x);
                             if can_move {
                                 app.snd_direction = Direction::Down;
                             }
@@ -303,11 +323,19 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             // check specials
             let mut to_remove = HashSet::new();
             for (i, special) in app.specials.iter().enumerate() {
-                if new_fst_x <= special.x && special.x < new_fst_x + 2 && new_fst_y <= special.y && special.y < new_fst_y + 2 {
+                if new_fst_x <= special.x
+                    && special.x < new_fst_x + 2
+                    && new_fst_y <= special.y
+                    && special.y < new_fst_y + 2
+                {
                     app.fst_color = Some(special.color);
                     to_remove.insert(i);
                 }
-                if new_snd_x <= special.x && special.x < new_snd_x + 2 && new_snd_y <= special.y && special.y < new_snd_y + 2 {
+                if new_snd_x <= special.x
+                    && special.x < new_snd_x + 2
+                    && new_snd_y <= special.y
+                    && special.y < new_snd_y + 2
+                {
                     app.snd_color = Some(special.color);
                     to_remove.insert(i);
                 }
@@ -328,12 +356,22 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 // drop special if same color
                 if app.fst_color == app.snd_color {
                     let current = app.fst_color.unwrap_or(Color::Black);
-                    let index = SPECIAL_COLORS.iter().position(|&c| c == current).unwrap_or(0);
-                    let next_color = SPECIAL_COLORS.get(index + 1).copied().unwrap_or(SPECIAL_COLORS[0]);
+                    let index = SPECIAL_COLORS
+                        .iter()
+                        .position(|&c| c == current)
+                        .unwrap_or(0);
+                    let next_color = SPECIAL_COLORS
+                        .get(index + 1)
+                        .copied()
+                        .unwrap_or(SPECIAL_COLORS[0]);
                     let mut rng = rand::thread_rng();
                     let x = rng.gen_range(0..size.width.saturating_sub(2));
                     let y = rng.gen_range(0..size.height.saturating_sub(2));
-                    app.specials.push(SpecialObject { x, y, color: next_color });
+                    app.specials.push(SpecialObject {
+                        x,
+                        y,
+                        color: next_color,
+                    });
                 }
                 // swap fst_colors
                 let temp = app.fst_color;
@@ -395,7 +433,9 @@ fn ui(f: &mut Frame, app: &mut App) {
     f.render_widget(snd_square, snd_area);
 
     for special in &app.specials {
-        let special_block = Block::default().borders(Borders::ALL).style(Style::default().bg(special.color));
+        let special_block = Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().bg(special.color));
         let area = ratatui::layout::Rect::new(special.x, special.y, 2, 2);
         f.render_widget(special_block, area);
     }

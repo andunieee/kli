@@ -1,11 +1,11 @@
 [package]
 name = "kli"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "A TUI pseudo-game where 1 or 2 kids can control two cursors through the screen and discover some colors."
+description = "A collection of TUI pseudo-games for kids that love the CLI."
 license = "MIT"
 repository = "https://github.com/andunieee/kli"
-keywords = ["tui", "game", "colors", "kids"]
+keywords = ["tui", "game", "colors", "kid", "cli", "children"]
 categories = ["games", "command-line-utilities"]
 
 [dependencies]
