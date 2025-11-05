@@ -14,16 +14,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            name: kli-linux-x64
+            suffix: linux-x64
           - os: macos-latest
             target: x86_64-apple-darwin
-            name: kli-macos-x64
+            suffix: macos-x64
           - os: macos-14
             target: aarch64-apple-darwin
-            name: kli-macos-arm64
+            suffix: macos-arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            name: kli-windows-x64.exe
+            suffix: windows-x64.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -37,14 +37,18 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }} --bins
 
-      - name: Rename binary
-        run: mv target/${{ matrix.target }}/release/kli${{ matrix.os == 'windows-latest' && '.exe' || '' }} ${{ matrix.name }}
+      - name: Rename binaries
+        run: |
+          mv target/${{ matrix.target }}/release/move${{ matrix.os == 'windows-latest' && '.exe' || '' }} move-${{ matrix.suffix }}
+          mv target/${{ matrix.target }}/release/pp${{ matrix.os == 'windows-latest' && '.exe' || '' }} pp-${{ matrix.suffix }}
 
-      - name: Upload binary
+      - name: Upload binaries
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ matrix.name }}
+          files: |
+            move-${{ matrix.suffix }}
+            pp-${{ matrix.suffix }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
